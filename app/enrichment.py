@@ -1,17 +1,13 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, Dict, Any
+import os
+import socket
+from .models import LogEntry, EnrichedLogEntry
 
 
-class LogEntry(BaseModel):
-    timestamp: datetime
-    level: str = Field(..., regex="^(INFO|WARNING|ERROR|DEBUG)$")
-    message: str
-    service_name: str
-    properties: Optional[Dict[str, Any]] = {}
-
-
-class EnrichedLogEntry(LogEntry):
-    ingestion_time: datetime
-    environment: str
-    instance_id: str
+def enrich_log(log: LogEntry) -> EnrichedLogEntry:
+    return EnrichedLogEntry(
+        **log.dict(),
+        ingestion_time=datetime.utcnow(),
+        environment=os.getenv("ENVIRONMENT", "production"),
+        instance_id=socket.gethostname(),
+    )
